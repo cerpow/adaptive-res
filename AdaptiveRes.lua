@@ -95,6 +95,7 @@ function GUI:PLAYER_LOGIN()
 	if AdaptiveRes_DB.fpsAdapt == nil then AdaptiveRes_DB.fpsAdapt = 60 end
 	if AdaptiveRes_DB.minScale == nil then AdaptiveRes_DB.minScale = 0.55 end
 	if AdaptiveRes_DB.maxScale == nil then AdaptiveRes_DB.maxScale = 1 end
+	if AdaptiveRes_DB.fontSize == nil then AdaptiveRes_DB.fontSize = 12 end
 	if AdaptiveRes_DB.timeDecreaseScale == nil then AdaptiveRes_DB.timeDecreaseScale = 1 end
 	if AdaptiveRes_DB.timeIncreaseScale == nil then AdaptiveRes_DB.timeIncreaseScale = 20 end
 	if AdaptiveRes_DB.guiEnabled == nil then AdaptiveRes_DB.guiEnabled = true end
@@ -123,6 +124,7 @@ function AdaptiveRes_SlashCommand(cmd)
 	InterfaceOptionsFrame_OpenToCategory("AdaptiveRes");
 end
 
+local g;
 function GUI:drawGUI()
 	GUI:SetWidth(30);
 	GUI:SetHeight(25);
@@ -138,7 +140,8 @@ function GUI:drawGUI()
 	GUI:SetScript("OnEvent", eventHandler);
 
 
-	local g = GUI:CreateFontString("$parentText", "ARTWORK", "GameFontNormalSmall")
+	g = GUI:CreateFontString("$parentText", "ARTWORK", "GameFontNormalSmall")
+	g:SetFont("Fonts\\FRIZQT__.TTF", AdaptiveRes_DB.fontSize);
 	g:SetJustifyH("LEFT");
 	g:SetPoint("CENTER",0,0);
 	g:SetText("");
@@ -346,6 +349,39 @@ function CreateConfigMenu()
 	local maxscale = CreateFrame("Slider", "AdaptiveResMaxScale", ConfigPanel, "OptionsSliderTemplate")
 	local decreasescale = CreateFrame("Slider", "AdaptiveRestimeDecreaseScale", ConfigPanel, "OptionsSliderTemplate")
 	local increasescale = CreateFrame("Slider", "AdaptiveRestimeIncreaseScale", ConfigPanel, "OptionsSliderTemplate")
+	local fontsize = CreateFrame("Slider", "AdaptiveResFontSize", ConfigPanel, "OptionsSliderTemplate")
+
+	-- FONT SIZE --
+	fontsize:SetWidth(200)
+	fontsize:SetHeight(20)
+	fontsize:SetOrientation('HORIZONTAL');
+	fontsize:SetPoint("TOPLEFT",380,-500);
+
+	fontsize:SetMinMaxValues(11, 22);
+	fontsize:SetValue(AdaptiveRes_DB.fontSize);
+	fontsize:RegisterForDrag("LeftButton");
+	fontsize:SetValueStep(1);
+	fontsize:SetObeyStepOnDrag(true);
+
+	getglobal(fontsize:GetName() .. 'Low'):SetText("11");
+	getglobal(fontsize:GetName() .. 'High'):SetText("22");
+	getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
+	getglobal(fontsize:GetName() .. 'Text'):SetPoint("LEFT");
+
+	fontsize:SetScript("OnReceiveDrag", function(self, button)
+		local n = fontsize:GetValue();
+		AdaptiveRes_DB.fontSize = n;
+		getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
+		g:SetFont("Fonts\\FRIZQT__.TTF", AdaptiveRes_DB.fontSize);
+	end);
+
+	fontsize:SetScript("OnValueChanged", function(self, button)
+		local n = fontsize:GetValue();
+		AdaptiveRes_DB.fontSize = n;
+		getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
+		g:SetFont("Fonts\\FRIZQT__.TTF", AdaptiveRes_DB.fontSize);
+	end);
+
 
 	--FPS to adapt--
 	fpsadapt:SetWidth(300)
@@ -526,7 +562,6 @@ function CreateConfigMenu()
 		getglobal(increasescale:GetName() .. 'Text'):SetText("Time to increase resolution scale - |cff3c9df2" .. AdaptiveRes_DB.timeIncreaseScale .. "sec|r");
 	end);
 
-
 	--CHECKBOXES
 	function createCheckbutton(x_loc, y_loc, varname, displaytext, tooltiptext)
 		local checkbutton = CreateFrame("CheckButton", "checkButton_" .. varname, ConfigPanel, "ChatConfigCheckButtonTemplate");
@@ -574,7 +609,7 @@ function CreateConfigMenu()
 	end);
 
 	-- Enable GUI Home Letency --
-	local guiEnableHomeLetency = createCheckbutton(280, -500, "guiEnableHomeLetency", "Show home letency", nil);
+	local guiEnableHomeLetency = createCheckbutton(16, -530, "guiEnableHomeLetency", "Show home letency", nil);
 	if AdaptiveRes_DB.guiEnabledHomeLetency then guiEnableHomeLetency:SetChecked(true) end
 	guiEnableHomeLetency:SetScript("OnClick", function()
 		if (AdaptiveRes_DB.guiEnabledHomeLetency) then
@@ -585,7 +620,7 @@ function CreateConfigMenu()
 	end);
 
 	-- Enable GUI World Letency --
-	local guiEnableWorldLetency = createCheckbutton(440, -500, "guiEnableWorldLetency", "Show world letency", nil);
+	local guiEnableWorldLetency = createCheckbutton(180, -530, "guiEnableWorldLetency", "Show world letency", nil);
 	if AdaptiveRes_DB.guiEnabledWorldLetency then guiEnableWorldLetency:SetChecked(true) end
 	guiEnableWorldLetency:SetScript("OnClick", function()
 		if (AdaptiveRes_DB.guiEnabledWorldLetency) then
