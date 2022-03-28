@@ -660,6 +660,10 @@ function CreateConfigMenu()
 		AdaptiveRes_DB.scale = 1
 		SetCVar("renderscale", AdaptiveRes_DB.scale);
 
+		AdaptiveRes_DB.fontSize = 12
+		fontsize:SetValue(AdaptiveRes_DB.fontSize);
+		getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
+
 		AdaptiveRes_DB.fpsAdapt = 60
 		fpsadapt:SetValue(AdaptiveRes_DB.fpsAdapt);
 		getglobal(fpsadapt:GetName() .. 'Text'):SetText("Target FPS - |cff3c9df260fps|r");
