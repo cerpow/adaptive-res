@@ -10,54 +10,59 @@ GUI:SetScript("OnEvent", function(self, event, ...) if self[event] then return s
 -- Color Functions  --
 ----------------------
 local function AdaptiveRes_GetThresholdPercentage(quality, ...)
-	local n = select('#', ...)
-	if n <= 1 then
-		return AdaptiveRes_GetThresholdPercentage(quality, 0, ... or 1)
-	end
+    local n = select('#', ...)
+    if n <= 1 then
+        return AdaptiveRes_GetThresholdPercentage(quality, 0, ... or 1)
+    end
 
-	local worst = ...
-	local best = select(n, ...)
+    local worst = ...
+    local best = select(n, ...)
 
-	if worst == best and quality == worst then
-		return 0.5
-	end
+    if worst == best and quality == worst then
+        return 0.5
+    end
 
-	if worst <= best then
-		if quality <= worst then
-			return 0
-		elseif quality >= best then
-			return 1
-		end
-		local last = worst
-		for i = 2, n-1 do
-			local value = select(i, ...)
-			if quality <= value then
-				return ((i-2) + (quality - last) / (value - last)) / (n-1)
-			end
-			last = value
-		end
+    if worst <= best then
+        if quality <= worst then
+            return 0
+        elseif quality >= best then
+            return 1
+        end
+        local last = worst
+        for i = 2, n-1 do
+            local value = select(i, ...)
+            if quality <= value then
+                if value - last == 0 then return 0 end -- Prevent division by zero
+                return ((i-2) + (quality - last) / (value - last)) / (n-1)
+            end
+            last = value
+        end
 
-		local value = select(n, ...)
-		return ((n-2) + (quality - last) / (value - last)) / (n-1)
-	else
-		if quality >= worst then
-			return 0
-		elseif quality <= best then
-			return 1
-		end
-		local last = worst
-		for i = 2, n-1 do
-			local value = select(i, ...)
-			if quality >= value then
-				return ((i-2) + (quality - last) / (value - last)) / (n-1)
-			end
-			last = value
-		end
+        local value = select(n, ...)
+        if value - last == 0 then return 0 end -- Prevent division by zero
+        return ((n-2) + (quality - last) / (value - last)) / (n-1)
+    else
+        if quality >= worst then
+            return 0
+        elseif quality <= best then
+            return 1
+        end
+        local last = worst
+        for i = 2, n-1 do
+            local value = select(i, ...)
+            if quality >= value then
+                if value - last == 0 then return 0 end -- Prevent division by zero
+                return ((i-2) + (quality - last) / (value - last)) / (n-1)
+            end
+            last = value
+        end
 
-		local value = select(n, ...)
-		return ((n-2) + (quality - last) / (value - last)) / (n-1)
-	end
+        local value = select(n, ...)
+        if value - last == 0 then return 0 end -- Prevent division by zero
+        return ((n-2) + (quality - last) / (value - last)) / (n-1)
+    end
 end
+
 
 local function AdaptiveRes_GetThresholdColor(quality, ...)
 
@@ -93,11 +98,10 @@ function GUI:PLAYER_LOGIN()
 
 	if AdaptiveRes_DB.scale == nil then AdaptiveRes_DB.scale = 1 end
 	if AdaptiveRes_DB.fpsAdapt == nil then AdaptiveRes_DB.fpsAdapt = 60 end
-	if AdaptiveRes_DB.minScale == nil then AdaptiveRes_DB.minScale = 0.55 end
+	if AdaptiveRes_DB.minScale == nil then AdaptiveRes_DB.minScale = 0.40 end
 	if AdaptiveRes_DB.maxScale == nil then AdaptiveRes_DB.maxScale = 1 end
-	if AdaptiveRes_DB.fontSize == nil then AdaptiveRes_DB.fontSize = 12 end
-	if AdaptiveRes_DB.timeDecreaseScale == nil then AdaptiveRes_DB.timeDecreaseScale = 1 end
-	if AdaptiveRes_DB.timeIncreaseScale == nil then AdaptiveRes_DB.timeIncreaseScale = 20 end
+	if AdaptiveRes_DB.timeDecreaseScale == nil then AdaptiveRes_DB.timeDecreaseScale = 0.5 end
+	if AdaptiveRes_DB.timeIncreaseScale == nil then AdaptiveRes_DB.timeIncreaseScale = 22 end
 	if AdaptiveRes_DB.guiEnabled == nil then AdaptiveRes_DB.guiEnabled = true end
 	if AdaptiveRes_DB.guiEnabledScale == nil then AdaptiveRes_DB.guiEnabledScale = true end
 	if AdaptiveRes_DB.guiEnabledFps == nil then AdaptiveRes_DB.guiEnabledFps = true end
@@ -124,7 +128,6 @@ function AdaptiveRes_SlashCommand(cmd)
 	InterfaceOptionsFrame_OpenToCategory("AdaptiveRes");
 end
 
-local g;
 function GUI:drawGUI()
 	GUI:SetWidth(30);
 	GUI:SetHeight(25);
@@ -140,11 +143,20 @@ function GUI:drawGUI()
 	GUI:SetScript("OnEvent", eventHandler);
 
 
-	g = GUI:CreateFontString("$parentText", "ARTWORK", "GameFontNormalSmall")
-	g:SetFont("Fonts\\FRIZQT__.TTF", AdaptiveRes_DB.fontSize);
-	g:SetJustifyH("LEFT");
-	g:SetPoint("CENTER",0,0);
-	g:SetText("");
+	-- Create a custom font object with the desired size
+	local font, size, flags = GameFontNormalSmall:GetFont() -- Get the default font, size, and flags from an existing font object
+	local newSize = 14 -- Set your desired font size here
+	local customFont = CreateFont("CustomFontName")
+	customFont:SetFont(font, newSize, flags)
+
+	-- Create the FontString
+	local g = GUI:CreateFontString("$parentText", "ARTWORK", "GameFontNormal")
+	g:SetJustifyH("LEFT")
+	g:SetPoint("CENTER", 0, 0)
+	g:SetText("")
+
+	-- Apply the custom font to the FontString
+	g:SetFontObject(customFont)
 
 	GUI:SetScript("OnMouseDown",function(widget, button)
 		if (button == "RightButton") then
@@ -179,7 +191,7 @@ function GUI:drawGUI()
 		local framerate_text = format("|cff%s%d|r fps", AdaptiveRes_GetThresholdHexColor(floor(framerate + 0.5) / 60), floor(framerate + 0.5));
 
 		local latencyHome = select(3, GetNetStats());
-		local latency_text = format("|cff%s%d|rms", AdaptiveRes_GetThresholdHexColor(latencyHome, 1000, 500, 250, 100, 0), latencyHome);
+		local latency_text = format("|cff%s%d|r ms", AdaptiveRes_GetThresholdHexColor(latencyHome, 1000, 500, 250, 100, 0), latencyHome);
 
 		local latencyWorld = select(4, GetNetStats());
 		local latency_text_server = format("|cff%s%d|r ms", AdaptiveRes_GetThresholdHexColor(latencyWorld, 1000, 500, 250, 100, 0), latencyWorld);
@@ -349,39 +361,6 @@ function CreateConfigMenu()
 	local maxscale = CreateFrame("Slider", "AdaptiveResMaxScale", ConfigPanel, "OptionsSliderTemplate")
 	local decreasescale = CreateFrame("Slider", "AdaptiveRestimeDecreaseScale", ConfigPanel, "OptionsSliderTemplate")
 	local increasescale = CreateFrame("Slider", "AdaptiveRestimeIncreaseScale", ConfigPanel, "OptionsSliderTemplate")
-	local fontsize = CreateFrame("Slider", "AdaptiveResFontSize", ConfigPanel, "OptionsSliderTemplate")
-
-	-- FONT SIZE --
-	fontsize:SetWidth(200)
-	fontsize:SetHeight(20)
-	fontsize:SetOrientation('HORIZONTAL');
-	fontsize:SetPoint("TOPLEFT",380,-500);
-
-	fontsize:SetMinMaxValues(11, 22);
-	fontsize:SetValue(AdaptiveRes_DB.fontSize);
-	fontsize:RegisterForDrag("LeftButton");
-	fontsize:SetValueStep(1);
-	fontsize:SetObeyStepOnDrag(true);
-
-	getglobal(fontsize:GetName() .. 'Low'):SetText("11");
-	getglobal(fontsize:GetName() .. 'High'):SetText("22");
-	getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
-	getglobal(fontsize:GetName() .. 'Text'):SetPoint("LEFT");
-
-	fontsize:SetScript("OnReceiveDrag", function(self, button)
-		local n = fontsize:GetValue();
-		AdaptiveRes_DB.fontSize = n;
-		getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
-		g:SetFont("Fonts\\FRIZQT__.TTF", AdaptiveRes_DB.fontSize);
-	end);
-
-	fontsize:SetScript("OnValueChanged", function(self, button)
-		local n = fontsize:GetValue();
-		AdaptiveRes_DB.fontSize = n;
-		getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
-		g:SetFont("Fonts\\FRIZQT__.TTF", AdaptiveRes_DB.fontSize);
-	end);
-
 
 	--FPS to adapt--
 	fpsadapt:SetWidth(300)
@@ -562,6 +541,7 @@ function CreateConfigMenu()
 		getglobal(increasescale:GetName() .. 'Text'):SetText("Time to increase resolution scale - |cff3c9df2" .. AdaptiveRes_DB.timeIncreaseScale .. "sec|r");
 	end);
 
+
 	--CHECKBOXES
 	function createCheckbutton(x_loc, y_loc, varname, displaytext, tooltiptext)
 		local checkbutton = CreateFrame("CheckButton", "checkButton_" .. varname, ConfigPanel, "ChatConfigCheckButtonTemplate");
@@ -609,7 +589,7 @@ function CreateConfigMenu()
 	end);
 
 	-- Enable GUI Home Letency --
-	local guiEnableHomeLetency = createCheckbutton(16, -530, "guiEnableHomeLetency", "Show home letency", nil);
+	local guiEnableHomeLetency = createCheckbutton(280, -500, "guiEnableHomeLetency", "Show home letency", nil);
 	if AdaptiveRes_DB.guiEnabledHomeLetency then guiEnableHomeLetency:SetChecked(true) end
 	guiEnableHomeLetency:SetScript("OnClick", function()
 		if (AdaptiveRes_DB.guiEnabledHomeLetency) then
@@ -620,7 +600,7 @@ function CreateConfigMenu()
 	end);
 
 	-- Enable GUI World Letency --
-	local guiEnableWorldLetency = createCheckbutton(180, -530, "guiEnableWorldLetency", "Show world letency", nil);
+	local guiEnableWorldLetency = createCheckbutton(440, -500, "guiEnableWorldLetency", "Show world letency", nil);
 	if AdaptiveRes_DB.guiEnabledWorldLetency then guiEnableWorldLetency:SetChecked(true) end
 	guiEnableWorldLetency:SetScript("OnClick", function()
 		if (AdaptiveRes_DB.guiEnabledWorldLetency) then
@@ -660,17 +640,13 @@ function CreateConfigMenu()
 		AdaptiveRes_DB.scale = 1
 		SetCVar("renderscale", AdaptiveRes_DB.scale);
 
-		AdaptiveRes_DB.fontSize = 12
-		fontsize:SetValue(AdaptiveRes_DB.fontSize);
-		getglobal(fontsize:GetName() .. 'Text'):SetText("Font size - |cff3c9df2" .. AdaptiveRes_DB.fontSize .. "pt");
-
 		AdaptiveRes_DB.fpsAdapt = 60
 		fpsadapt:SetValue(AdaptiveRes_DB.fpsAdapt);
 		getglobal(fpsadapt:GetName() .. 'Text'):SetText("Target FPS - |cff3c9df260fps|r");
 
-		AdaptiveRes_DB.minScale = 0.55
+		AdaptiveRes_DB.minScale = 0.40
 		minscale:SetValue(AdaptiveRes_DB.minScale * 100);
-		getglobal(minscale:GetName() .. 'Text'):SetText("Minimum resolution scale - |cff3c9df255%|r");
+		getglobal(minscale:GetName() .. 'Text'):SetText("Minimum resolution scale - |cff3c9df240%|r");
 		getglobal(maxscale:GetName() .. 'Low'):SetText(AdaptiveRes_DB.minScale * 100 .. "%");
 		maxscale:SetMinMaxValues(AdaptiveRes_DB.minScale * 100, 200);
 
@@ -680,13 +656,13 @@ function CreateConfigMenu()
 		getglobal(minscale:GetName() .. 'High'):SetText(AdaptiveRes_DB.maxScale * 100 .. "%");
 		minscale:SetMinMaxValues(30, AdaptiveRes_DB.maxScale * 100);
 
-		AdaptiveRes_DB.timeDecreaseScale = 1
+		AdaptiveRes_DB.timeDecreaseScale = 0.5
 		decreasescale:SetValue(AdaptiveRes_DB.timeDecreaseScale);
-		getglobal(decreasescale:GetName() .. 'Text'):SetText("Time to decrease resolution scale - |cff3c9df21sec|r");
+		getglobal(decreasescale:GetName() .. 'Text'):SetText("Time to decrease resolution scale - |cff3c9df20.5sec|r");
 
-		AdaptiveRes_DB.timeIncreaseScale = 20
+		AdaptiveRes_DB.timeIncreaseScale = 22
 		increasescale:SetValue(AdaptiveRes_DB.timeIncreaseScale);
-		getglobal(increasescale:GetName() .. 'Text'):SetText("Time to increase resolution scale - |cff3c9df220sec|r");
+		getglobal(increasescale:GetName() .. 'Text'):SetText("Time to increase resolution scale - |cff3c9df222sec|r");
 
 		AdaptiveRes_DB.guiEnabled = true
 		GUI:Show();
