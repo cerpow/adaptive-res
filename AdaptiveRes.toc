@@ -1,7 +1,7 @@
-## Interface: 100206
+## Interface: 110002
 ## Title: AdaptiveRes
 ## Author: Voicu Apostol (Cerpow)
-## Version:  1.0.8
+## Version:  1.0.9
 ## Notes: Adapt game resolution to maintain a stable FPS.
 ## SavedVariables: AdaptiveRes_DB
 ## IconTexture: Interface\Icons\Tradingpostcurrency

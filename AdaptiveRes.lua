@@ -5,7 +5,9 @@ local SECONDS_TIMER = 0;
 local LOGIN_TIMER = 0;
 local GUI = CreateFrame("frame","AdaptiveResGUI",UIParent);
 GUI:SetScript("OnEvent", function(self, event, ...) if self[event] then return self[event](self, event, ...) end end);
-
+AdaptiveRes = {
+	Version = "1.0.9";
+}
 ----------------------
 -- Color Functions  --
 ----------------------
@@ -118,14 +120,14 @@ function GUI:PLAYER_LOGIN()
 	SLASH_AdaptiveRes1 = "/AdaptiveRes";
 	SlashCmdList["AdaptiveRes"] = AdaptiveRes_SlashCommand;
 
-	DEFAULT_CHAT_FRAME:AddMessage(string.format("|cff3c9df2%s|r |cff1ef407v%s|r is loaded.", "AdaptiveRes", GetAddOnMetadata("AdaptiveRes","Version")))
+	DEFAULT_CHAT_FRAME:AddMessage(string.format("|cff3c9df2%s|r |cff1ef407v%s|r is loaded.", "AdaptiveRes", AdaptiveRes.Version))
 
 	self:UnregisterEvent("PLAYER_LOGIN")
 	self.PLAYER_LOGIN = nil
 end
 
 function AdaptiveRes_SlashCommand(cmd)
-	InterfaceOptionsFrame_OpenToCategory("AdaptiveRes");
+	Settings.OpenToCategory(AdaptiveRes.CategoryId);
 end
 
 function GUI:drawGUI()
@@ -160,7 +162,7 @@ function GUI:drawGUI()
 
 	GUI:SetScript("OnMouseDown",function(widget, button)
 		if (button == "RightButton") then
-			InterfaceOptionsFrame_OpenToCategory("AdaptiveRes");
+			Settings.OpenToCategory(AdaptiveRes.CategoryId);
 		end
 
 		if (button == "LeftButton" and IsShiftKeyDown()) then
@@ -334,13 +336,16 @@ end
 -- Config functions
 --------------------------------------
 function CreateConfigMenu()
+	local category
 	local ConfigPanel = CreateFrame("FRAME");
 	ConfigPanel.name = "AdaptiveRes";
-	InterfaceOptions_AddCategory(ConfigPanel);
+	category = Settings.RegisterCanvasLayoutCategory(ConfigPanel, ConfigPanel.name)
+	Settings.RegisterAddOnCategory(category)
+	AdaptiveRes.CategoryId = category:GetID();
 
 	local ConfigPanelTitle = ConfigPanel:CreateFontString(nil,"ARTWORK","GameFontNormalLarge");
 	ConfigPanelTitle:SetPoint("TOPLEFT",16,-15);
-	ConfigPanelTitle:SetText("AdaptiveRes v" .. GetAddOnMetadata("AdaptiveRes","Version"));
+	ConfigPanelTitle:SetText("AdaptiveRes v" .. AdaptiveRes.Version);
 
 	local scaletitle = ConfigPanel:CreateFontString(nil,"ARTWORK","GameFontNormal")
 	scaletitle:SetPoint("TOPLEFT",16,-40);
